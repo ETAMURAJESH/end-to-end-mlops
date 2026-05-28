@@ -1,5 +1,6 @@
 import pandas as pd
 import joblib
+import mlflow
 
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression 
@@ -31,7 +32,6 @@ X_train, X_test, y_trian ,y_test = train_test_split(
 
 # creat the model 
 model = LogisticRegression(max_iter=1000)
-
 #train model 
 model.fit(X_train,y_trian)
 
@@ -43,7 +43,14 @@ accuracy = accuracy_score(y_test,y_pred)
 
 print("Model Accuracy:",accuracy)
 
+mlflow.start_run()
+mlflow.log_param("max_iter", 1000)
+
+
+mlflow.log_metric("accuracy", accuracy)
+
 # Save trained model
 joblib.dump(model, "models/titanic_model.pkl")
 
 print("Model Saved Successfully")
+mlflow.end_run()
