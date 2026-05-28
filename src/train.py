@@ -1,4 +1,5 @@
 import pandas as pd
+import joblib
 
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression 
@@ -41,3 +42,8 @@ y_pred = model.predict(X_test)
 accuracy = accuracy_score(y_test,y_pred)
 
 print("Model Accuracy:",accuracy)
+
+# Save trained model
+joblib.dump(model, "models/titanic_model.pkl")
+
+print("Model Saved Successfully")
