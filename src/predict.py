@@ -1,23 +1,22 @@
 import joblib
-import pandas as pd 
+import pandas as pd
 
+# Load best model
+pipeline = joblib.load("models/pipeline.pkl")
 
-#load saved model 
-model = joblib.load("models/titanic_model.pkl")
-
-
-#sample passenger data 
 sample_data = pd.DataFrame({
     "Pclass": [3],
-    "Sex": [1],
     "Age": [22],
     "SibSp": [1],
     "Parch": [0],
     "Fare": [7.25],
-    "Embarked": [2]
+    "Sex": ["male"],
+    "Embarked": ["S"]
 })
 
-#predict
+print("Input Data:")
+print(sample_data)
+
 prediction = model.predict(sample_data)
 
-print("prediction:",prediction)
+print("Prediction:", prediction)

@@ -1,37 +1,69 @@
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
 
-def preprocess_data(df):
+from sklearn.compose import ColumnTransformer
 
-    # drop unnecessary columns
-    df = df.drop(
-        ["PassengerId", "Name", "Ticket", "Cabin"],
-        axis=1,
-        errors="ignore"
+from sklearn.pipeline import Pipeline
+
+from sklearn.impute import SimpleImputer
+
+from sklearn.preprocessing import (
+    StandardScaler,
+    OneHotEncoder
+)
+
+
+def preprocess_data(df, target_column):
+
+    # SEPARATE FEATURES AND TARGET
+    X = df.drop(target_column, axis=1)
+
+    y = df[target_column]
+
+
+    # DETECT NUMERIC COLUMNS
+    numeric_features = X.select_dtypes(
+        include=["int64", "float64"]
+    ).columns
+
+
+    # DETECT CATEGORICAL COLUMNS
+    categorical_features = X.select_dtypes(
+        include=["object"]
+    ).columns
+
+
+    # NUMERIC PIPELINE
+    numeric_transformer = Pipeline(
+        steps=[
+            ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler())
+        ]
     )
 
-    # fill missing values
-    df["Age"] = df["Age"].fillna(df["Age"].median())
-    df["Fare"] = df["Fare"].fillna(df["Fare"].median())
-    df["Embarked"] = df["Embarked"].fillna(df["Embarked"].mode()[0])
 
-    # encode categorical columns
-    encoder = LabelEncoder()
-
-    df["Sex"] = encoder.fit_transform(df["Sex"])
-    df["Embarked"] = encoder.fit_transform(df["Embarked"])
-
-    return df
+    # CATEGORICAL PIPELINE
+    categorical_transformer = Pipeline(
+        steps=[
+            ("imputer", SimpleImputer(strategy="most_frequent")),
+            ("encoder", OneHotEncoder(handle_unknown="ignore"))
+        ]
+    )
 
 
-# test run (only when file executed directly)
-if __name__ == "__main__":
+    # COMBINE PIPELINES
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ("num", numeric_transformer, numeric_features),
+            ("cat", categorical_transformer, categorical_features)
+        ]
+    )
 
-    df = pd.read_csv("data/tested.csv")
-    processed_df = preprocess_data(df)
 
-    print(processed_df.head())
-    print(processed_df.isnull().sum())
+    # TRANSFORM DATA
+    X_processed = preprocessor.fit_transform(X)
 
-    processed_df.to_csv("data/processed.csv", index=False)
-    print("Saved: data/processed.csv")
+    # CONVERT SPARSE MATRIX TO DENSE ARRAY
+    X_processed = X_processed.toarray()
+
+
+    return X_processed, y

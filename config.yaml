@@ -1,0 +1,16 @@
+dataset:
+  path: data/tested.csv
+
+target_column: Survived
+
+train:
+  test_size: 0.2
+  random_state: 42
+
+models:
+  - LogisticRegression
+  - DecisionTree
+  - RandomForest
+  - KNN
+  - SVM
+  - NaiveBayes

@@ -3,48 +3,109 @@ import joblib
 import mlflow
 
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 
 from preprocessing import preprocess_data
+from model_factory import get_models
+from config_loader import load_config
 
 
-# load data
-df = pd.read_csv("data/tested.csv")
+# LOAD CONFIG
+config = load_config()
 
-# preprocess
-df = preprocess_data(df)
 
-# split X and y
-X = df.drop("Survived", axis=1)
-y = df["Survived"]
+# LOAD DATASET
+dataset_path = config["dataset"]["path"]
 
-# train-test split (FIXED TYPO)
+df = pd.read_csv(dataset_path)
+
+
+# TARGET COLUMN
+target_column = config["target_column"]
+
+
+# PREPROCESS DATA
+X, y = preprocess_data(df, target_column)
+
+
+# TRAIN TEST SPLIT
+test_size = config["train"]["test_size"]
+
+random_state = config["train"]["random_state"]
+
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
+    X,
+    y,
+    test_size=test_size,
+    random_state=random_state
 )
 
-# model
-model = LogisticRegression(max_iter=1000)
-model.fit(X_train, y_train)
 
-# prediction
-y_pred = model.predict(X_test)
+# LOAD MODELS FROM CONFIG
+model_names = config["models"]
 
-# accuracy
-accuracy = accuracy_score(y_test, y_pred)
-print("Model Accuracy:", accuracy)
+models = get_models(model_names)
 
-# MLflow tracking
-mlflow.start_run()
 
-mlflow.log_param("model", "LogisticRegression")
-mlflow.log_param("max_iter", 1000)
-mlflow.log_metric("accuracy", accuracy)
+# BEST MODEL TRACKING
+best_model = None
 
-# save model
-joblib.dump(model, "models/model.pkl")
+best_accuracy = 0
 
-mlflow.end_run()
+best_model_name = ""
 
-print("Model Saved Successfully") 
+
+# TRAIN ALL MODELS
+for model_name, model in models.items():
+
+    print(f"\nTraining {model_name}...")
+
+    model.fit(X_train, y_train)
+
+    y_pred = model.predict(X_test)
+
+    accuracy = accuracy_score(y_test, y_pred)
+
+    print(f"{model_name} Accuracy: {accuracy}")
+
+
+    # SHOW BEST PARAMETERS
+    if hasattr(model, "best_params_"):
+
+        print(f"{model_name} Best Params: {model.best_params_}")
+
+
+    # MLFLOW LOGGING
+    mlflow.start_run(run_name=model_name)
+
+    mlflow.log_param("model_name", model_name)
+
+    mlflow.log_metric("accuracy", accuracy)
+
+    mlflow.end_run()
+
+
+    # BEST MODEL CHECK
+    if accuracy > best_accuracy:
+
+        best_accuracy = accuracy
+
+        best_model = model
+
+        best_model_name = model_name
+
+
+# FINAL RESULTS
+print("\n==========================")
+
+print(f"BEST MODEL: {best_model_name}")
+
+print(f"BEST ACCURACY: {best_accuracy}")
+
+print("==========================")
+
+
+# SAVE BEST MODEL
+joblib.dump(best_model, "models/model.pkl")
+
+print("Best model saved successfully")
