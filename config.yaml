@@ -1,16 +1,51 @@
+# ── model_config.yaml ─────────────────────────────────────────────────────────
+# Works for ANY dataset. Change dataset.path + target_column + preprocessing
+# to switch datasets. Everything else stays the same.
+
+# ── Dataset ───────────────────────────────────────────────────────────────────
 dataset:
-  path: data/tested.csv
+  path: "data/tested.csv"          # ← change this for a different dataset
+  version: "v1"
 
-target_column: Survived
+target_column: "Survived"          # ← change this for a different dataset
 
+# ── Preprocessing ─────────────────────────────────────────────────────────────
+preprocessing:
+  # task_type is AUTO-DETECTED. Override only if auto-detection is wrong:
+  # task_type: "classification"    # or "regression"
+
+  # Columns to always drop (IDs, free text, junk).
+  # Auto-detection also drops high-cardinality and zero-variance columns.
+  drop_columns:
+    - PassengerId
+    - Name
+    - Ticket
+    - Cabin
+
+  # Force-keep a column even if auto-drop wants to remove it:
+  # keep_columns:
+  #   - SomeImportantColumn
+
+  numeric_strategy: "median"         # mean | median | most_frequent | constant
+  categorical_strategy: "most_frequent"
+  max_categories: 50                 # OHE cap — columns with more unique values are bucketed
+
+# ── Training ──────────────────────────────────────────────────────────────────
 train:
   test_size: 0.2
   random_state: 42
+  cv_folds: 5
 
+# ── Models ────────────────────────────────────────────────────────────────────
+# Use ["auto"] to train ALL models matching the detected task type.
+# Or list specific models (must match task type — see model_factory.py registry).
 models:
-  - LogisticRegression
-  - DecisionTree
-  - RandomForest
-  - KNN
-  - SVM
-  - NaiveBayes
+  - "auto"
+
+# ── MLflow ────────────────────────────────────────────────────────────────────
+mlflow:
+  experiment_name: "titanic_auto_comparison"   # ← change per dataset/experiment
+
+# ── Output ────────────────────────────────────────────────────────────────────
+output:
+  model_path: "models/pipeline.pkl"
