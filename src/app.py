@@ -34,19 +34,20 @@ log = logging.getLogger(__name__)
 
 # ── Model store (in-process singleton) ───────────────────────────────────────
 
+
 class ModelStore:
     """Holds the loaded pipeline and its metadata."""
 
     def __init__(self):
-        self.pipeline       = None
-        self.model_path:  Path = None
-        self.loaded_at:   float = None
+        self.pipeline = None
+        self.model_path: Path = None
+        self.loaded_at: float = None
         self.is_retraining: bool = False
 
     def load(self, path: Path) -> None:
-        self.pipeline   = joblib.load(path)
+        self.pipeline = joblib.load(path)
         self.model_path = path
-        self.loaded_at  = time.time()
+        self.loaded_at = time.time()
         log.info("Model loaded from %s", path)
 
     @property
@@ -68,6 +69,7 @@ store = ModelStore()
 
 
 # ── Lifespan — load model on startup ─────────────────────────────────────────
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -92,6 +94,7 @@ app = FastAPI(
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
 
+
 class PredictRequest(BaseModel):
     """
     Pass a list of records (dicts). Each dict is one row.
@@ -102,6 +105,7 @@ class PredictRequest(BaseModel):
     Batch example:
         {"data": [{"feature_1": 5.1}, {"feature_1": 3.2}]}
     """
+
     data: list[dict[str, Any]]
 
     @model_validator(mode="after")
@@ -113,28 +117,29 @@ class PredictRequest(BaseModel):
 
 class PredictResponse(BaseModel):
     predictions: list[Any]
-    model_name:  str
+    model_name: str
     record_count: int
 
 
 class RetrainResponse(BaseModel):
-    status:  str
+    status: str
     message: str
 
 
 class HealthResponse(BaseModel):
-    status:     str
+    status: str
     model_ready: bool
 
 
 class ModelInfoResponse(BaseModel):
-    model_name:  str
-    model_path:  str
-    loaded_at:   float | None
+    model_name: str
+    model_path: str
+    loaded_at: float | None
     is_retraining: bool
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
+
 
 @app.get("/health", response_model=HealthResponse, tags=["ops"])
 def health():
@@ -146,9 +151,9 @@ def health():
 def model_info():
     """Return metadata about the currently loaded model."""
     return {
-        "model_name":    store.model_name,
-        "model_path":    str(store.model_path) if store.model_path else "none",
-        "loaded_at":     store.loaded_at,
+        "model_name": store.model_name,
+        "model_path": str(store.model_path) if store.model_path else "none",
+        "loaded_at": store.loaded_at,
         "is_retraining": store.is_retraining,
     }
 
@@ -180,8 +185,8 @@ def predict(request: PredictRequest):
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     return {
-        "predictions":  predictions,
-        "model_name":   store.model_name,
+        "predictions": predictions,
+        "model_name": store.model_name,
         "record_count": len(predictions),
     }
 
@@ -193,8 +198,8 @@ def _retrain_job() -> None:
     try:
         store.is_retraining = True
         log.info("Retraining started …")
-        run_pipeline()                  # runs full train.py pipeline
-        store.load(model_path)          # hot-reload the new artifact
+        run_pipeline()  # runs full train.py pipeline
+        store.load(model_path)  # hot-reload the new artifact
         log.info("Retraining complete. New model: %s", store.model_name)
     except Exception:
         log.exception("Retraining failed")
@@ -220,7 +225,7 @@ def retrain(background_tasks: BackgroundTasks):
     return JSONResponse(
         status_code=202,
         content={
-            "status":  "accepted",
+            "status": "accepted",
             "message": "Retraining started. Poll GET /model/info until is_retraining is false.",
         },
     )

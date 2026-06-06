@@ -17,9 +17,20 @@ log = logging.getLogger(__name__)
 
 # Columns that are almost always junk — override via config if needed
 _AUTO_DROP_PATTERNS = [
-    "id", "passengerid", "customerid", "userid", "rowid",   # IDs
-    "name", "firstname", "lastname", "fullname",             # free text names
-    "ticket", "cabin", "address", "email", "phone",          # high-cardinality strings
+    "id",
+    "passengerid",
+    "customerid",
+    "userid",
+    "rowid",  # IDs
+    "name",
+    "firstname",
+    "lastname",
+    "fullname",  # free text names
+    "ticket",
+    "cabin",
+    "address",
+    "email",
+    "phone",  # high-cardinality strings
 ]
 
 # Threshold: if a categorical column has more unique values than this
@@ -28,6 +39,7 @@ _HIGH_CARDINALITY_RATIO = 0.5
 
 
 # ── Auto-detectors ────────────────────────────────────────────────────────────
+
 
 def detect_task_type(y: pd.Series) -> str:
     """
@@ -56,7 +68,7 @@ def auto_drop_columns(df: pd.DataFrame, target_column: str) -> list[str]:
       3. Only 1 unique value (zero variance — carries no information)
     """
     to_drop = []
-    n_rows   = len(df)
+    n_rows = len(df)
 
     for col in df.columns:
         if col == target_column:
@@ -88,6 +100,7 @@ def auto_drop_columns(df: pd.DataFrame, target_column: str) -> list[str]:
 
 # ── Validation ────────────────────────────────────────────────────────────────
 
+
 def validate_dataframe(df: pd.DataFrame, target_column: str) -> None:
     if target_column not in df.columns:
         raise KeyError(
@@ -112,6 +125,7 @@ def validate_dataframe(df: pd.DataFrame, target_column: str) -> None:
 
 # ── Pipeline builder ──────────────────────────────────────────────────────────
 
+
 def build_preprocessor(
     numeric_features: list[str],
     categorical_features: list[str],
@@ -119,18 +133,25 @@ def build_preprocessor(
     categorical_strategy: str = "most_frequent",
     max_categories: int = 50,
 ) -> ColumnTransformer:
-    numeric_pipeline = Pipeline([
-        ("imputer", SimpleImputer(strategy=numeric_strategy)),
-        ("scaler",  StandardScaler()),
-    ])
-    categorical_pipeline = Pipeline([
-        ("imputer", SimpleImputer(strategy=categorical_strategy)),
-        ("encoder", OneHotEncoder(
-            handle_unknown="ignore",
-            sparse_output=False,
-            max_categories=max_categories,
-        )),
-    ])
+    numeric_pipeline = Pipeline(
+        [
+            ("imputer", SimpleImputer(strategy=numeric_strategy)),
+            ("scaler", StandardScaler()),
+        ]
+    )
+    categorical_pipeline = Pipeline(
+        [
+            ("imputer", SimpleImputer(strategy=categorical_strategy)),
+            (
+                "encoder",
+                OneHotEncoder(
+                    handle_unknown="ignore",
+                    sparse_output=False,
+                    max_categories=max_categories,
+                ),
+            ),
+        ]
+    )
 
     transformers = []
     if numeric_features:
@@ -145,6 +166,7 @@ def build_preprocessor(
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
+
 
 def preprocess_data(
     df: pd.DataFrame,
@@ -185,9 +207,9 @@ def preprocess_data(
     log.info("Task type: %s", task_type)
 
     # ── Drop columns ──────────────────────────────────────────────────────────
-    auto_drop   = auto_drop_columns(df, target_column)
+    auto_drop = auto_drop_columns(df, target_column)
     manual_drop = cfg.get("drop_columns", [])
-    keep        = set(cfg.get("keep_columns", []))
+    keep = set(cfg.get("keep_columns", []))
 
     # merge auto + manual, then remove anything in keep_columns
     all_drop = list(set(auto_drop + manual_drop + [target_column]) - keep)
@@ -197,13 +219,17 @@ def preprocess_data(
     log.info("Remaining: %s", X.columns.tolist())
 
     # ── Feature type detection ────────────────────────────────────────────────
-    numeric_features     = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
-    categorical_features = X.select_dtypes(include=["object", "category"]).columns.tolist()
+    numeric_features = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
+    categorical_features = X.select_dtypes(
+        include=["object", "category"]
+    ).columns.tolist()
 
     log.info(
         "Numeric (%d): %s  |  Categorical (%d): %s",
-        len(numeric_features),     numeric_features,
-        len(categorical_features), categorical_features,
+        len(numeric_features),
+        numeric_features,
+        len(categorical_features),
+        categorical_features,
     )
 
     # ── Build + fit ───────────────────────────────────────────────────────────
@@ -222,7 +248,9 @@ def preprocess_data(
 
     log.info(
         "Preprocessing done — X: %s  y: %s  task: %s",
-        X_processed.shape, y.shape, task_type,
+        X_processed.shape,
+        y.shape,
+        task_type,
     )
 
     return X_processed, y, preprocessor, task_type

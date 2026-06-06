@@ -1,11 +1,12 @@
-import pandas as pd 
+import pandas as pd
+
 
 def load_data(path):
     data = pd.read_csv(path)
-    return data 
+    return data
 
 
-if __name__== "__main__":
+if __name__ == "__main__":
 
     df = load_data("data/tested.csv")
 
