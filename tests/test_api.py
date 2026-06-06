@@ -3,20 +3,20 @@ tests/test_api.py — FastAPI endpoint tests.
 Run with: pytest tests/ -v  (from project root)
 """
 
-import sys
 import os
+import sys
+from unittest.mock import patch
 
-# Add project root to Python path so 'src' is importable
+# Add project root to path before any src imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-import pytest
-from fastapi.testclient import TestClient
-from unittest.mock import patch
-from src.app import app
+from fastapi.testclient import TestClient  # noqa: E402
+
+from src.app import app  # noqa: E402
 
 client = TestClient(app)
 
-# ── Sample Titanic passenger (valid input) ────────────────────────────────────
+# ── Sample data ───────────────────────────────────────────────────────────────
 VALID_PASSENGER = {
     "data": [
         {
@@ -110,7 +110,6 @@ def test_model_info_not_retraining_at_startup():
 
 def test_predict_single_passenger():
     response = client.post("/predict", json=VALID_PASSENGER)
-    # 503 if no model loaded in CI — acceptable; 200 if model exists
     assert response.status_code in (200, 503)
 
 
@@ -162,7 +161,7 @@ def test_retrain_response_schema():
 def test_retrain_blocks_duplicate_while_running():
     from src.app import store
 
-    store.is_retraining = True  # simulate a running retrain
+    store.is_retraining = True
     response = client.post("/retrain")
-    store.is_retraining = False  # reset after test
+    store.is_retraining = False
     assert response.status_code == 409
