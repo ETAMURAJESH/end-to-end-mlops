@@ -78,7 +78,8 @@ jobs:
         run: python -m src.train
         env:
           PYTHONPATH: .
-          MLFLOW_TRACKING_URI: ""
+          MLFLOW_TRACKING_URI: "sqlite:///mlruns.db"
+          MLFLOW_ALLOW_FILE_STORE: "true"
 
       - name: Verify pipeline.pkl was created
         run: |
