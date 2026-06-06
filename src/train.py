@@ -4,6 +4,7 @@ Works on ANY dataset: classification or regression.
 Auto-detects task type from preprocessing, picks correct models + metrics.
 """
 
+import os
 import logging
 import joblib
 import mlflow
@@ -158,6 +159,11 @@ def run_pipeline() -> None:
     train_cfg       = config["train"]
     dataset_version = config.get("dataset", {}).get("version", "unknown")
     cv_folds        = train_cfg.get("cv_folds", 5)
+
+    # Read tracking URI from env (set by Docker Compose) or fall back to local
+    tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
+    mlflow.set_tracking_uri(tracking_uri)
+    log.info("MLflow tracking URI: %s", tracking_uri)
 
     mlflow.set_experiment(
         config.get("mlflow", {}).get("experiment_name", "auto_model_comparison")

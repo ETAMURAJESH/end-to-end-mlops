@@ -1,0 +1,24 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Git
+.git
+.gitignore
+
+# MLflow tracking (large, not needed in container)
+mlruns/
+mlflow.db
+
+# Notebooks (not needed in container)
+notebooks/
+
+# Local venv
+venv/
+.env
+.venv
+
+# OS
+.DS_Store
