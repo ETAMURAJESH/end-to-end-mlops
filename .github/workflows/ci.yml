@@ -23,19 +23,21 @@ jobs:
           python-version: "3.12"
 
       - name: Install linting tools
-        run: pip install flake8 black
+        # Pin black to same version used locally (black==26.5.1)
+        # so CI and local never disagree on formatting rules
+        run: pip install "black==26.5.1" flake8
 
       - name: Check formatting (black)
-        run: black --check src/
+        run: black --check src/ tests/
 
       - name: Check style (flake8)
-        run: flake8 src/ --max-line-length=100 --ignore=E501,W503
+        run: flake8 src/ tests/ --max-line-length=100 --ignore=E501,W503,E203
 
   # ── Job 2: Unit Tests ───────────────────────────────────────────────────────
   test:
     name: Run Tests
     runs-on: ubuntu-latest
-    needs: lint                        # only runs if lint passes
+    needs: lint
 
     steps:
       - name: Checkout code
@@ -47,18 +49,18 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest
+        run: pip install -r requirements.txt pytest httpx2
 
       - name: Run tests
         run: pytest tests/ -v --tb=short
         env:
-          PYTHONPATH: .                # so src.xxx imports resolve in tests
+          PYTHONPATH: .
 
   # ── Job 3: Train + Validate Model ──────────────────────────────────────────
   train:
     name: Train & Validate Model
     runs-on: ubuntu-latest
-    needs: test                        # only trains if tests pass
+    needs: test
 
     steps:
       - name: Checkout code
@@ -76,28 +78,28 @@ jobs:
         run: python -m src.train
         env:
           PYTHONPATH: .
-          MLFLOW_TRACKING_URI: ""      # local file-based tracking in CI
+          MLFLOW_TRACKING_URI: ""
 
       - name: Verify pipeline.pkl was created
         run: |
           if [ ! -f models/pipeline.pkl ]; then
-            echo "❌ pipeline.pkl not found — training failed"
+            echo "pipeline.pkl not found — training failed"
             exit 1
           fi
-          echo "✅ pipeline.pkl created successfully"
+          echo "pipeline.pkl created successfully"
 
       - name: Upload model artifact
         uses: actions/upload-artifact@v4
         with:
           name: pipeline-pkl
           path: models/pipeline.pkl
-          retention-days: 7            # keep for 7 days for debugging
+          retention-days: 7
 
   # ── Job 4: Docker Build ─────────────────────────────────────────────────────
   docker:
     name: Build Docker Image
     runs-on: ubuntu-latest
-    needs: train                       # only builds if training succeeds
+    needs: train
 
     steps:
       - name: Checkout code
@@ -117,5 +119,5 @@ jobs:
           docker run -d -p 8000:8000 --name test-api titanic-mlops:${{ github.sha }}
           sleep 5
           curl -f http://localhost:8000/health || (docker logs test-api && exit 1)
-          echo "✅ Health check passed"
+          echo "Health check passed"
           docker stop test-api

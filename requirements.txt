@@ -16,3 +16,4 @@ mlflow>=2.5.0
 
 # Reproducibility
 dvc>=3.0.0
+httpx2httpx2
