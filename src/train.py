@@ -55,12 +55,8 @@ def compute_metrics(y_true, y_pred, task_type: str) -> dict:
         return {
             "accuracy": round(accuracy_score(y_true, y_pred), 4),
             "f1": round(f1_score(y_true, y_pred, average=avg, zero_division=0), 4),
-            "precision": round(
-                precision_score(y_true, y_pred, average=avg, zero_division=0), 4
-            ),
-            "recall": round(
-                recall_score(y_true, y_pred, average=avg, zero_division=0), 4
-            ),
+            "precision": round(precision_score(y_true, y_pred, average=avg, zero_division=0), 4),
+            "recall": round(recall_score(y_true, y_pred, average=avg, zero_division=0), 4),
         }
     else:
         mse = mean_squared_error(y_true, y_pred)
@@ -111,9 +107,7 @@ def log_run(
 
 def print_summary(results: dict, task_type: str) -> None:
     """Ranked table: test metric + CV mean ± std for every model."""
-    ranked = sorted(
-        results.items(), key=lambda x: x[1]["cv_metrics"]["cv_mean"], reverse=True
-    )
+    ranked = sorted(results.items(), key=lambda x: x[1]["cv_metrics"]["cv_mean"], reverse=True)
 
     if task_type == "classification":
         header = (
@@ -178,8 +172,7 @@ def check_for_leakage(results: dict, task_type: str) -> None:
             )
         if abs(test_score - cv_score) > 0.10:
             log.warning(
-                "%s test %s (%.4f) vs CV mean (%.4f) gap > 10%%. "
-                "Model may be overfitting.",
+                "%s test %s (%.4f) vs CV mean (%.4f) gap > 10%%. " "Model may be overfitting.",
                 name,
                 metric_key,
                 test_score,
@@ -202,9 +195,7 @@ def run_pipeline() -> None:
     mlflow.set_tracking_uri(tracking_uri)
     log.info("MLflow tracking URI: %s", tracking_uri)
 
-    mlflow.set_experiment(
-        config.get("mlflow", {}).get("experiment_name", "auto_model_comparison")
-    )
+    mlflow.set_experiment(config.get("mlflow", {}).get("experiment_name", "auto_model_comparison"))
 
     # 2. Load raw CSV
     df = pd.read_csv(config["dataset"]["path"])
@@ -290,13 +281,9 @@ def run_pipeline() -> None:
         log.info("Confusion Matrix:\n%s", confusion_matrix(y_test, best_preds))
 
     # 9. Save pipeline
-    full_pipeline = SklearnPipeline(
-        [("preprocessor", preprocessor), ("model", best_model)]
-    )
+    full_pipeline = SklearnPipeline([("preprocessor", preprocessor), ("model", best_model)])
 
-    output_path = Path(
-        config.get("output", {}).get("model_path", "models/pipeline.pkl")
-    )
+    output_path = Path(config.get("output", {}).get("model_path", "models/pipeline.pkl"))
     output_path.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(full_pipeline, output_path)
     log.info("Pipeline (preprocessor + %s) saved -> %s", best_name, output_path)

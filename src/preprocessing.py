@@ -104,8 +104,7 @@ def auto_drop_columns(df: pd.DataFrame, target_column: str) -> list[str]:
 def validate_dataframe(df: pd.DataFrame, target_column: str) -> None:
     if target_column not in df.columns:
         raise KeyError(
-            f"Target column '{target_column}' not found. "
-            f"Available: {df.columns.tolist()}"
+            f"Target column '{target_column}' not found. " f"Available: {df.columns.tolist()}"
         )
     if df.empty:
         raise ValueError("DataFrame is empty — cannot preprocess.")
@@ -220,9 +219,7 @@ def preprocess_data(
 
     # ── Feature type detection ────────────────────────────────────────────────
     numeric_features = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
-    categorical_features = X.select_dtypes(
-        include=["object", "category"]
-    ).columns.tolist()
+    categorical_features = X.select_dtypes(include=["object", "category"]).columns.tolist()
 
     log.info(
         "Numeric (%d): %s  |  Categorical (%d): %s",

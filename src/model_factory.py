@@ -43,9 +43,7 @@ _REGISTRY = {
 def get_model(name: str, params: dict | None = None):
     """Instantiate a single model by registry key."""
     if name not in _REGISTRY:
-        raise ValueError(
-            f"Unknown model '{name}'. " f"Available: {list(_REGISTRY.keys())}"
-        )
+        raise ValueError(f"Unknown model '{name}'. " f"Available: {list(_REGISTRY.keys())}")
     model_cls, _ = _REGISTRY[name]
     return model_cls(**(params or {}))
 
@@ -69,9 +67,7 @@ def get_models(model_names: list[str], task_type: str = "classification") -> dic
     models = {}
     for name in model_names:
         if name not in _REGISTRY:
-            raise ValueError(
-                f"Unknown model '{name}'. Available: {list(_REGISTRY.keys())}"
-            )
+            raise ValueError(f"Unknown model '{name}'. Available: {list(_REGISTRY.keys())}")
         model_cls, model_task = _REGISTRY[name]
         if model_task != task_type:
             raise ValueError(
