@@ -1,0 +1,6 @@
+# Dev / test only — NOT installed on Render
+-r requirements.txt
+pytest
+httpx2
+pre-commit
+dvc>=3.0.0

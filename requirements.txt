@@ -1,8 +1,8 @@
-# API
+# API — required at runtime (Render installs this)
 fastapi>=0.100.0
 uvicorn[standard]>=0.23.0
 
-# ML — pinned to exact training environment versions to prevent InconsistentVersionWarning
+# ML — pinned to exact training environment versions
 scikit-learn==1.8.0
 pandas==2.3.3
 numpy==2.4.6
@@ -13,8 +13,3 @@ pyyaml>=6.0
 
 # Experiment tracking
 mlflow>=2.5.0
-
-# Reproducibility
-dvc>=3.0.0
-httpx2
-pre-commit

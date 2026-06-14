@@ -49,7 +49,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest httpx2
+        run: pip install -r requirements-dev.txt
 
       - name: Run tests
         run: pytest tests/ -v --tb=short
@@ -78,8 +78,7 @@ jobs:
         run: python -m src.train
         env:
           PYTHONPATH: .
-          MLFLOW_TRACKING_URI: "sqlite:///mlruns.db"
-          MLFLOW_ALLOW_FILE_STORE: "true"
+          MLFLOW_TRACKING_URI: ""
 
       - name: Verify pipeline.pkl was created
         run: |
