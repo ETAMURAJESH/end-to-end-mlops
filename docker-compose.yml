@@ -8,7 +8,7 @@ services:
     container_name: mlflow-server
     working_dir: /mlflow
     volumes:
-      - mlflow_data:/mlflow          # persists runs across restarts
+      - mlflow_data:/mlflow
     ports:
       - "5000:5000"
     command: >
@@ -26,13 +26,35 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./models:/app/models         # model trained locally is visible in container
-      - ./data:/app/data             # dataset accessible for /retrain
+      - ./models:/app/models
+      - ./data:/app/data
     environment:
-      - MLFLOW_TRACKING_URI=http://mlflow:5000   # api logs runs to mlflow container
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
     depends_on:
-      - mlflow                       # starts after mlflow, no healthcheck needed
+      - mlflow
     restart: on-failure
 
+  # ── Prometheus metrics collector ────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - api
+
+  # ── Grafana dashboard ───────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+
 volumes:
-  mlflow_data:                       # named volume — survives docker compose down
+  mlflow_data:
